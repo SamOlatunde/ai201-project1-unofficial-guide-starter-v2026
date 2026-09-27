@@ -1,46 +1,58 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+**Name:** Samuel Olatunde | **Corpus:** campus_life
 
-> **This file is your submission.** Fill it in as you go — most sections get
-> written during the milestone that produces them, not at the end.
->
-> How the starter works, and every command you'll need, is in `RUNNING.md`.
-> Leave that file alone.
->
-> **Paste everything as text.** No screenshots, no video. A typed table gets
-> full credit; a picture of the same table gets none.
->
-> Delete these instruction blocks as you replace them. The `<!-- -->` comments
-> are notes to you and don't show up when the page renders — you can leave them
-> or remove them.
-
----
 
 # Unit 1
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+This is a retrieval-augmented Q&A system built on the `campus_life` corpus — eighty-eight short posts about student life at a university, covering dining halls, dorms, courses, and administrative rules that aren't written down anywhere official. It answers specific, factual questions a student would ask another student rather than look up themselves, like whether dining dollars roll over between semesters, how to appeal a grade, and when laundry rooms are least crowded. Because most of these documents pack their useful information into a single sentence, the system leans on retrieving a small number of tightly relevant chunks rather than large ones. See `questions.py` for the full set of test questions it's built to answer.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 300
+**Overlap:** 50
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
+Every document in this corpus is between 183 and 554 characters — a title
+line, then one to three short paragraphs. At the starter's default of 800/120,
+nothing ever splits: 88 documents in, 88 chunks out. That's not chunking, it's
+just relabeling whole files, so I dropped the size until documents actually
+started splitting.
 
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
+I tried a few size/overlap pairs against a handful of representative
+documents (shortest, longest, a couple of mid-length ones) and counted two
+things: chunks that cut through the middle of a word, and chunks left over at
+the end of a document that were basically nothing (a few leftover characters,
+like `"ail."` off the tail of "email."). 300/50 gave the fewest mid-word cuts
+of the sizes that still split the longer documents.
 
-     Milestone 3. -->
+That didn't get rid of the tiny leftover chunks, though — across the whole
+corpus, 16 of 161 chunks came out under 30 characters. My first instinct was
+to fix that by raising the overlap, but sweeping overlap from 50 up to 200
+made it *worse*: more overlap means more chunk boundaries per document, and
+each boundary is still just a raw character index with no idea where a word
+ends, so mid-word cuts went from 43 up to 137 while the tiny-chunk count
+bounced around without ever approaching zero. Overlap controls how often a
+cut happens, not where it lands, so it was never going to fix this.
+
+The actual fix was in `split_documents`, not in the numbers: any trailing
+piece under 40 characters gets merged into the previous chunk instead of kept
+standalone. Since 40 is smaller than the 50-character overlap, that leftover
+piece is guaranteed to already be inside the previous chunk's tail — `"ail."`
+is literally the end of the `"fail."` the previous chunk already has — so the
+merge checks for that containment and drops the fragment rather than
+duplicating it. That took the whole corpus from 16 tiny chunks to 0, and
+`admin_library_holds.txt` — one of the worst offenders — went from 2 chunks
+(one of them just `"ail."`) to 1 clean 300-character chunk.
+
+Known trade-off I kept rather than fixed: this is still raw character
+windowing, so it pays no attention to sentence or paragraph structure, and any
+document that does split loses its title line on every chunk after the first
+— the title only ever appears at the very start of the raw text. A strategy
+that split on paragraph breaks and re-prepended the title to each piece would
+avoid both problems; I chose the simpler tuning-plus-tail-merge approach
+instead of rewriting the splitting logic from scratch.
 
 ## Sample Chunks
 
@@ -102,14 +114,16 @@ Wednesday morning. Sunday after 6pm you will wait.
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
 
-**Question:**
+**Question:** Can I upgrage my meal plan tier for free?
 
-**Answer:**
+**Answer:** No, upgrading your meal plan tier bills you immediately. 
 
-```
-```
+**Source:** admin_meal_plan_changes.txt
 
-**My relevance cutoff:**
+**Sources retrieved:** admin_meal_plan_changes.txt, dining_halden_hall.txt, dining_north_kitchen.txt, dining_the_atrium.txt, dining_the_ridgeway_cafe.txt
+
+
+**My relevance cutoff:** I set my relevance cut off to 0.6 becuase my last question was 0.45 but the source asa still correct, at the same time I didn't want to place the score too high, so I think 0.6 is a reasonable cutoff, especially for harder question.
 
 <!-- The number you set in config.py, and how you got there.
 
@@ -119,10 +133,20 @@ Wednesday morning. Sunday after 6pm you will wait.
      here — the table below wants all ten rows.
 
      Milestone 4. -->
+     
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| Does my dining dollars roll over from spring to the following autumn sememsters? | Yes | 0.272 |
+| Can I appeal my grade to the department chair? | Yes | 0.397 |
+| When's the best time to do laundry in morrow house? | Yes | 0.310 |
+| Can I upgrage my meal plan tier for free? | Yes | 0.383 |
+| How long does it take to get my first session at the counseling centre? | Yes | 0.451 |
+| What is the capital of Mongolia? | No | 0.825 |
+| How do I change the oil in a diesel engine? | No | 0.908 |
+| Who won the 1994 World Cup? | No | 0.869 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.782 |
+| How do I write a for loop in Rust? | No | 0.893 |
 
 ## How I Used AI
 
@@ -135,9 +159,9 @@ Wednesday morning. Sunday after 6pm you will wait.
 
      Milestone 5. -->
 
-**1.**
+**1.** I used it to explain concepts likechunking, and how to run certain functionality to save me the time of eye fishing in ``RUNNINg.md`` to find the exact commands.
 
-**2.**
+**2.** I also used it for fast experiemnation and anaslsis, specifically, I instructed it to run different chunk_size/overlap splits to save me time analysising. I also used it to implement logic and fill in the readme from my conversations with it. 
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never

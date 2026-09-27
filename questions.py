@@ -24,7 +24,7 @@ names a target of "4 of 5", and four of three is not a thing.
 QUESTIONS = [
     # {"question": "...", "expects": "..."},
     {"question": "Does my dining dollars roll over from spring to the following autumn sememsters?", "expects": "No"},
-    {"question": "Can I appeal my grad to the department chair?", "expects": "No, appeals must start with the instructor first"},
+    {"question": "Can I appeal my grade to the department chair?", "expects": "No, appeals must start with the instructor first"},
     {"question": "When's the best time to do laundry in morrow house?", "expects": "Tuesday or Wednesday mornings"},
     {"question": "Can I upgrage my meal plan tier for free?", "expects": "No"},
     {"question": "How long does it take to get my first session at the counseling centre?", "expects": "Usually three to four days"},
