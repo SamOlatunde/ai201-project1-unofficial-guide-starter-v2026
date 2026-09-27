@@ -80,24 +80,68 @@ def fallback_split(
     return chunks
 
 
+MIN_TAIL_CHARS = 40  # a trailing fragment shorter than this gets merged back
+
+
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split documents into chunks.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
+    Same fixed-size character windowing as `fallback_split`, just tuned:
+    CHUNK_SIZE=300 / CHUNK_OVERLAP=50 instead of the generic 800/120. At
+    800/120 nothing in this corpus ever split (every document is under 554
+    characters); at 300/50, documents over ~300 characters actually split,
+    which is the point of this milestone.
 
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
+    One fix on top of the raw windowing: the last window in a document is
+    often just a few leftover characters ("ail." from the tail of "email.").
+    Tried tuning overlap to avoid this instead — across the whole corpus it
+    never got the tiny-chunk count anywhere near zero, and raising overlap
+    made mid-word cuts substantially worse (more boundaries per document,
+    each one still just a raw character index). So instead: any trailing
+    piece shorter than MIN_TAIL_CHARS gets merged onto the previous chunk of
+    the same document rather than kept standalone.
 
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    That merge is a no-op in disguise, not string surgery: since
+    MIN_TAIL_CHARS (40) is smaller than CHUNK_OVERLAP (50), any piece short
+    enough to trigger it is guaranteed to fall entirely inside the previous
+    window's overlap region — "ail." isn't new content, it's literally the
+    tail of "fail." that the previous chunk already ends with. So the merge
+    checks for that containment and drops the fragment outright; it only
+    falls back to concatenating if that guarantee doesn't hold (e.g. if
+    someone changes MIN_TAIL_CHARS or CHUNK_OVERLAP later without checking
+    this still holds).
+
+    Known trade-off, taken deliberately rather than fixed: this windowing
+    still slices on raw character position, so mid-word cuts inside a chunk
+    (not just at the very end) still happen, and every chunk after the first
+    one in a split document loses the source document's title line, since the
+    title only ever appears at the very start of the text. A strategy that
+    split on paragraph breaks and re-prepended the title to each piece would
+    avoid both; this one doesn't.
     """
-    return fallback_split(documents)
+    chunks = fallback_split(documents)
+
+    merged: list[Chunk] = []
+    for chunk in chunks:
+        if (
+            merged
+            and merged[-1].source == chunk.source
+            and len(chunk.text) < MIN_TAIL_CHARS
+        ):
+            if chunk.text not in merged[-1].text:
+                merged[-1].text = f"{merged[-1].text} {chunk.text}"
+            # else: fully contained in the overlap region already — drop it
+        else:
+            merged.append(chunk)
+
+    counts: dict[str, int] = {}
+    for chunk in merged:
+        chunk.index = counts.get(chunk.source, 0)
+        counts[chunk.source] = chunk.index + 1
+        chunk.produced_by = "chunker.py::split_documents"
+
+    return merged
 
 
 def describe(chunks: list[Chunk]) -> str:

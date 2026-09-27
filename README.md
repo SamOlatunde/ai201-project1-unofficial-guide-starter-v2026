@@ -53,29 +53,48 @@
 
      Milestone 3. -->
 
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: `admin_add_drop_deadline.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+On the add/drop deadline
+
+You can add a course through the end of the second week. Dropping is a longer window — through the end of week six — but a drop after week two shows as a W on your transcript. Nothing anywhere on the registrar's site says this plainly, and students find out from each other.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `course_cs_210_exams.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+CS 210 Data Structures — assessment
+
+Two midterms and a final, all drawn from lecture material rather than the textbook. Midterms are curved, the final is not.
+
+Do the labs even though they're only 10% — the exams reuse the lab problems.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: `course_stat_150_exams.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+STAT 150 Applied Statistics — assessment
+
+Three equally weighted midterms, no final. No curve, but the lowest midterm is dropped.
+
+The dropped midterm makes the first one low-stakes; use it to learn the format.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: `dining_verrill_street_grill_followup.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Re: Verrill Street Grill
+
+Adding to what people have said about Verrill Street Grill. The wait figure of up to 30 minutes on Friday evenings matches what I've seen. If you're trying to eat between classes, gobefore 11:45 and it's a different building entirely.
+
+Also worth saying: one register, so t
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `housing_morrow_house_laundry.txt#1` — produced by: `chunker.py::split_documents`
 
 ```
+Wednesday morning. Sunday after 6pm you will wait.
 ```
 
 ## Sample Answer
