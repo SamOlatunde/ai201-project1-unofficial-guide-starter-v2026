@@ -43,10 +43,15 @@ def _judge_grade_appeal(answer: str) -> bool:
     text = answer.lower()
     if re.search(r"\byes\b", text):
         return False
-    if not re.search(r"\bno\b", text):
+    # the answer doesn't have to literally say "no" -- stating the real
+    # process (instructor first) is itself a correct "no" to "can I go
+    # straight to the chair". What it can't do is say the chair/department
+    # is a valid first step.
+    if not re.search(r"\binstructor\b", text):
         return False
-    # "no" alone isn't enough -- it has to be no for the right reason
-    return "instructor" in text
+    if re.search(r"\b(chair|department)\b.*\bfirst\b", text):
+        return False
+    return True
 
 
 def _judge_laundry(answer: str) -> bool:
@@ -62,24 +67,27 @@ def _judge_meal_plan(answer: str) -> bool:
     if _is_refusal(answer):
         return False
     text = answer.lower()
-    if "free" not in text and "complimentary" not in text and "no cost" not in text and "no charge" not in text:
-        # doesn't have to say "free" explicitly -- a clear no/cost mention is enough
-        if not re.search(r"\b(no|not|cannot|can't|isn't|is not)\b", text):
-            return False
-    negates_free = re.search(r"\b(no|not|isn't|is not|cannot|can't)\b.*\bfree\b", text) or \
-        re.search(r"\bfree\b.*\b(no|not|isn't|is not)\b", text) or \
-        "cost" in text or "fee" in text or "charge" in text or "not free" in text or "not complimentary" in text
     affirms_free = re.search(r"\b(is|are)\s+free\b", text) or "for free" in text or "at no cost" in text
-    if affirms_free and not negates_free:
+    if affirms_free:
         return False
-    return bool(negates_free)
+    # doesn't have to name "free"/"cost"/"fee" explicitly -- a plain "no" to
+    # the question, or any language implying a charge, counts as correctly
+    # negating "for free".
+    negates = (
+        re.search(r"^\s*no\b", text) or re.search(r"\bno\b", text)
+        or any(w in text for w in ("not free", "isn't free", "cost", "fee", "charge", "bill"))
+    )
+    return bool(negates)
 
 
 def _judge_counseling(answer: str) -> bool:
     if _is_refusal(answer):
         return False
     text = answer.lower()
-    has_range = "three to four" in text or "3 to 4" in text or "3-4" in text
+    has_range = any(
+        phrase in text
+        for phrase in ("three to four", "three or four", "3 to 4", "3 or 4", "3-4")
+    )
     has_hedge = any(word in text for word in ("usually", "typically", "on average", "generally"))
     return has_range and has_hedge
 

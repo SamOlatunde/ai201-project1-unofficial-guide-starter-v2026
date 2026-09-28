@@ -31,6 +31,7 @@ times over.
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 
@@ -311,3 +312,24 @@ def answer_from_chunks(question: str, results, cache: bool = True) -> str:
     """
     prompt = build_prompt(question, results)
     return generate(prompt, system=GROUNDING_INSTRUCTION, cache=cache)
+
+
+_SOURCE_RE = re.compile(r"\b([\w\-]+\.txt)\b")
+
+
+def source_is_grounded(answer: str, results) -> bool:
+    """
+    True only if every filename the answer names was actually retrieved.
+
+    "Every answer names a source" (criterion 2) was previously checked by
+    just looking for *any* filename-shaped text in the answer. That passes
+    even if the model names a file that was never retrieved, or invents one
+    that doesn't exist in the corpus at all — it was a check on the prompt
+    instruction, not on the answer's honesty. This checks the name against
+    the actual retrieved set instead.
+    """
+    retrieved = {r.source for r in results}
+    named = _SOURCE_RE.findall(answer)
+    if not named:
+        return False
+    return all(name in retrieved for name in named)
