@@ -193,8 +193,8 @@ Wednesday morning. Sunday after 6pm you will wait.
 | 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
 | 2. Every answer names a source | 5 of 5 |  |  |  |  |
 | 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 4. Sampled chunks begin with the source document's title line | 4 of 5 |  |  |  |  |
+| 5. Named source actually contains the fact stated | 5 of 5 |  |  |  |  |
 
 <!-- Underneath, paste the REAL output for each criterion from one of your
      runs — the actual text your system produced, not a description of it.
@@ -258,8 +258,8 @@ Wednesday morning. Sunday after 6pm you will wait.
 | 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
 | 2. Every answer names a source | 5 of 5 |  |  |  |  |
 | 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 4. Sampled chunks begin with the source document's title line | 4 of 5 |  |  |  |  |
+| 5. Named source actually contains the fact stated | 5 of 5 |  |  |  |  |
 
 **Did it help?**
 
